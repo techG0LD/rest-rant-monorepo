@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useContext} from "react";
 import { useHistory, useParams } from "react-router"
 import CommentCard from './CommentCard'
 import NewCommentForm from "./NewCommentForm";
+import { CurrentUser } from "../contexts/CurrentUser";
+
 
 function PlaceDetails() {
+	 const {currentUser} = useContext(CurrentUser)
 
 	const { placeId } = useParams()
 
@@ -35,9 +38,13 @@ function PlaceDetails() {
 		history.push('/places')
 	}
 
-	async function deleteComment(deletedComment) {
-		await fetch(`http://localhost:5000/places/${place.placeId}/comments/${deletedComment.commentId}`, {
-			method: 'DELETE'
+	 async function deleteComment(deletedComment) {
+    	await fetch(`http://localhost:5000/places/${place.placeId}/comments/${deletedComment.commentId}`, {
+			method: 'DELETE',
+			headers: {
+				'Authorization': `Bearer ${localStorage.getItem('token')}`,
+				'Content-Type': 'application/json'
+			}
 		})
 
 		setPlace({
@@ -51,6 +58,7 @@ function PlaceDetails() {
 		const response = await fetch(`http://localhost:5000/places/${place.placeId}/comments`, {
 			method: 'POST',
 			headers: {
+				'Authorization': `Bearer ${localStorage.getItem('token')}`,
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(commentAttributes)
@@ -101,6 +109,21 @@ function PlaceDetails() {
 		})
 	}
 
+	let placeActions = null
+
+	if(currentUser?.role === 'admin') {
+		placeActions = (
+			<>
+			<a className="btn btn-warning" onClick={editPlace}>
+						Edit
+			</a>
+			<button type="submit" className="btn btn-danger" onClick={deletePlace}>
+						Delete
+			</button>
+			</>
+		)
+	}
+
 
 	return (
 		<main>
@@ -128,12 +151,8 @@ function PlaceDetails() {
 						Serving {place.cuisines}.
 					</h4>
 					<br />
-					<a className="btn btn-warning" onClick={editPlace}>
-						Edit
-					</a>{` `}
-					<button type="submit" className="btn btn-danger" onClick={deletePlace}>
-						Delete
-					</button>
+					{placeActions}
+					
 				</div>
 			</div>
 			<hr />
